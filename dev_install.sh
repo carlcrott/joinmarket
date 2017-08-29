@@ -17,7 +17,26 @@ fi
 
 
 ## check pip
-type pip >/dev/null 2>&1 || { echo >&2 "Pip required but not installed."; }
+type pip >/dev/null 2>&1 || { echo >&2 "Pip required but not installed. Aborting"; exit 1;}
+
+## check for or install libsodium
+if type dingo >/dev/null 2>&1; then
+	echo "Homebrew installed"
+	if ! brew ls --versions libsodium > /dev/null; then
+		# libsodium not installed ... so install
+		brew install libsodium
+		echo "Libsodium installed"
+	fi
+else
+	echo "Homebrew not present. Installing libsodium from source"
+	git clone git://github.com/jedisct1/libsodium.git
+	cd libsodium
+	git checkout tags/1.0.3
+	./autogen.sh
+	./configure
+	make check
+	sudo make install
+fi
 
 
 ## check for bitcoin core installation
@@ -25,15 +44,6 @@ if [ -d "/Users/$USER/Documents/python_projects/bitcoin/" ]; then
   echo "btccore present"
 else
    echo "Bitcoin Core NOT present -- please install in /Users/$USER/Documents/python_projects/bitcoin/"
-fi
-
-
-## check for libsodium
-type brew >/dev/null 2>&1 || { echo >&2 "Brew required but not installed."; }
-
-if ! brew ls --versions libsodium > /dev/null; then
-  # The package is not installed
-	brew install libsodium
 fi
 
 
@@ -61,7 +71,7 @@ fi
 
 # run tests
 
-
+PYTHONPATH=.:$PYTHONPATH py.test --cov-report html --nirc=2 --btcroot=/Users/carlcrott/Documents/python_projects/bitcoin/src/ --btcconf=/Users/carlcrott/Library/Application\ Support/Bitcoin/bitcoin.conf --btcpwd=123456abcdef
 
 
 
